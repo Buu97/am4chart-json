@@ -45,6 +45,13 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "aot": true,
+            "allowedCommonJsDependencies": [
+              "core-js",
+              "raf",
+              "xlsx",
+              "@babel/runtime",
+              "polylabel"
+            ],
             "assets": [
               "src/favicon.ico",
               "src/assets"
