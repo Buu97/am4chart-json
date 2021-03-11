@@ -63,6 +63,8 @@ export class AppComponent implements AfterViewInit {
   }];
   private chartConfigs = {
     'XYChart1': {
+      valeur_prop: 'valueY',
+      category_prop: 'categoryX',
       type: 'XYChart',
       xAxes: [{
         type: 'CategoryAxis',
@@ -82,6 +84,8 @@ export class AppComponent implements AfterViewInit {
       }]
     },
     'XYChart2': {
+      valeur_prop: 'valueY',
+      category_prop: 'categoryX',
       type: 'XYChart',
       xAxes: [{
         type: 'CategoryAxis',
@@ -98,9 +102,11 @@ export class AppComponent implements AfterViewInit {
           "valueY": "litres",
           "categoryX": "country"
         }
-      }]
+      }],
     },
     'XYChart3': {
+      valeur_prop: 'valueX',
+      category_prop: 'categoryY',
       type: 'XYChart',
       yAxes: [{
         type: 'CategoryAxis',
@@ -116,13 +122,12 @@ export class AppComponent implements AfterViewInit {
         "dataFields": {
           "valueX": "litres",
           "categoryY": "country"
-        },
-        columns: {
-          fill: colors.next()
         }
       }]
     },
     'RadarChart': {
+      valeur_prop: 'valueY',
+      category_prop: 'categoryX',
       type: 'RadarChart',
       "xAxes": [{
         "type": "CategoryAxis",
@@ -142,8 +147,7 @@ export class AppComponent implements AfterViewInit {
             "categoryX": "country"
           },
           "columns": {
-            "tooltipText": "Series: {name}\nCategory: {categoryX}\nValue: {valueY}",
-            "fill": "#CDA2AB"
+            "tooltipText": "Series: {name}\nCategory: {categoryX}\nValue: {valueY}"
           }
         }
       ]
@@ -182,6 +186,12 @@ export class AppComponent implements AfterViewInit {
   }
 
   private renderContainer() {
+    // ce dont tu dois tenir component
+    // let chart = am4core.create('container', am4chart.XYChart);
+    // chart.processConfig(config);
+    // chart.data = data;
+    // fin
+
     am4core.useTheme(am4themes_animated);
 
     const chartChoices = ['XYChart1', 'XYChart2', 'XYChart3', 'RadarChart', 'MapChart', 'tableau'];
@@ -216,31 +226,34 @@ export class AppComponent implements AfterViewInit {
         id: choice,
         events: {
           hit: (e) => {
-            chart.setVisibility(false);
-
-            const config = this.chartConfigs[e.target.id];
-            let replacementChart: am4charts.Chart;
-
-            if (config.type == 'MapChart') {
-              replacementChart = chartContainer.createChild(am4maps.MapChart);
-
-              (replacementChart as am4maps.MapChart).zoomControl = new am4maps.ZoomControl();
-              (replacementChart as am4maps.MapChart).zoomControl.valign = "top";
-            } else {
-              replacementChart = chartContainer.createChild(am4charts[config.type]);
+            if (e?.target?.id !== this.activeChartType) {
+              this.activeChartType = e.target.id;
+              chart.setVisibility(false);
+  
+              const config = this.chartConfigs[e.target.id];
+              let replacementChart: am4charts.Chart;
+  
+              if (config.type == 'MapChart') {
+                replacementChart = chartContainer.createChild(am4maps.MapChart);
+  
+                (replacementChart as am4maps.MapChart).zoomControl = new am4maps.ZoomControl();
+                (replacementChart as am4maps.MapChart).zoomControl.valign = "top";
+              } else {
+                replacementChart = chartContainer.createChild(am4charts[config.type]);
+              }
+  
+              replacementChart.setVisibility(false);
+              replacementChart.processConfig(config);
+              replacementChart.data = this.data;
+  
+              replacementChart.setVisibility(true);
+              chart.dispose();
+  
+              chart = undefined;
+              chart = replacementChart;
+  
+              this.chart = chart;
             }
-
-            replacementChart.setVisibility(false);
-            replacementChart.processConfig(config);
-            replacementChart.data = this.data;
-
-            replacementChart.setVisibility(true);
-            chart.dispose();
-
-            chart = undefined;
-            chart = replacementChart;
-
-            this.chart = chart;
           }
         },
         href: `/assets/${choice}.png`,
@@ -253,6 +266,9 @@ export class AppComponent implements AfterViewInit {
   public addSeries() {
     const currentConfig = this.chartConfigs[this.activeChartType];
 
+    // J'utilise une syntaxe avancée qui n'est pas encore supportée par tous les navigateurs
+    // Je pense que pour le BO, ça ira
+    // mais si vous voulez faire attention, essayez une syntaxe plus commune
     this.chart.processConfig({
       ...currentConfig,
       series: [
@@ -261,8 +277,8 @@ export class AppComponent implements AfterViewInit {
           ...currentConfig.series[0],
           name: 'stuff',
           dataFields: {
-            valueY: 'units',
-            categoryX: 'country'
+            [currentConfig.valeur_prop]: 'units',
+            [currentConfig.category_prop]: 'country'
           }
         }
       ]
